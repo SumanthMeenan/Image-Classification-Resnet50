@@ -4,6 +4,7 @@ import sys
 import keras
 import constants
 from resnet50 import ResNet50
+from vgg import VGG16
 from PIL import * 
 import numpy as np
 import pandas as pd
@@ -47,10 +48,10 @@ validation_generator = val_datagen.flow_from_directory(
     batch_size=16,
     class_mode='categorical')
 
-def train(train_generator, validation_generator):
+def train_resnet50(train_generator, validation_generator):
     model = Sequential()
     model.add(ResNet50(include_top = False, pooling = 'avg', weights = 'imagenet'))
-    model.add(Dense(constants.NUM_CLASSES, activation = 'softmax'))
+    model.add(Dense(constants.NUM_CLASSES, activation = 'sigmoid'))
     model.layers[0].trainable = False
     
     sgd = SGD(lr=0.001, decay=5e-6, momentum=0.87, nesterov=True)
@@ -64,28 +65,65 @@ def train(train_generator, validation_generator):
                         epochs=constants.EPOCHS, validation_data=validation_generator,
                         validation_steps=constants.NB_VALIDATION_SAMPLES // constants.BATCH_SIZE,callbacks=[constants.CHECKPOINTER, constants.TENSORBOARD])
     print(" Inside Train")
-    model.save_weights(constants.WEIGHTS_PATH)
+    # model.save_weights(constants.WEIGHTS_PATH1)
+    model.save(constants.MODELPATH)
 
+def train_vgg16(train_generator, validation_generator):
+    model = Sequential()
+    model.add(VGG16(include_top = False, pooling = 'avg', weights = 'imagenet'))
+    model.add(Dense(constants.NUM_CLASSES, activation = 'sigmoid'))
+    model.layers[0].trainable = False
+    
+    sgd = SGD(lr=0.001, decay=5e-6, momentum=0.87, nesterov=True)
+    model.compile(loss='binary_crossentropy',
+                  optimizer=sgd,
+                  metrics=['accuracy'])
+    # plot_model(model, to_file='model_plot.png', show_shapes=True, show_layer_names=True)
+    print(model.summary())
+    model.fit_generator(train_generator,
+                        steps_per_epoch=constants.NB_TRAIN_SAMPLES // constants.BATCH_SIZE,
+                        epochs=constants.EPOCHS, validation_data=validation_generator,
+                        validation_steps=constants.NB_VALIDATION_SAMPLES // constants.BATCH_SIZE,callbacks=[constants.CHECKPOINTER, constants.TENSORBOARD])
+    print(" Inside Train")
+    # model.save_weights(constants.WEIGHTS_PATH2)
+    model.save(constants.MODELPATH)
 
-# def test(test_image):
-#     model = build_model()
-#     model.load_weights(checkpoint_path)
-#     im = cv2.imread(test_image)
-#     im = im.reshape([-1, 256, 256, 3])
-#     print(model.predict_proba(im))
+def build_resnet_model():
+    model = Sequential()
+    model.add(ResNet50(include_top = False, pooling = 'avg', weights = 'imagenet'))
+    model.add(Dense(constants.NUM_CLASSES, activation = 'softmax'))
+    model.layers[0].trainable = False
+    return model
 
-# def retrain():
-#     model = build_model()
-#     model.load_weights(checkpoint_path)
-#     model.compile(loss='categorical_crossentropy',
-#                   optimizer='adam',
-#                   metrics=['categorical_accuracy'])
-#     print(model)
-#     model.fit_generator(train_generator,
-#                         steps_per_epoch=nb_train_samples // batch_size,
-#                         epochs=epochs, validation_data=validation_generator,
-#                         validation_steps=nb_validation_samples // batch_size, callbacks=[checkpointer, tensorboard])
-#     model.save_weights(checkpoint_path)
+def test_resnet_model(test_image):
+    model = build_resnet_model()
+    model.load_weights(constants.CHECKPOINT_PATH)
+    im = cv2.imread(test_image)
+    im = im.resize([ 256, 256, 3])
+    print(model.predict(im))
+    # print(model.predict_proba(im))
+
+def build_vgg_model():
+    model = Sequential()
+    model.add(ResNet50(include_top = False, pooling = 'avg', weights = 'imagenet'))
+    model.add(Dense(constants.NUM_CLASSES, activation = 'softmax'))
+    model.layers[0].trainable = False
+    return model
+
+def test_vgg_model(test_image):
+    model = build_vgg_model()
+    model.load_weights(constants.CHECKPOINT_PATH)
+    im = cv2.imread(test_image)
+    im = im.reshape([-1, 256, 256, 3])
+    print(model.predict_proba(im))
+
+def test_resnet():
+    model = load_model(constants.MODELPATH)
+    pred=model.predict_generator(test_generator, steps=len(test_generator), verbose=1)
+    cl = np.round(pred)
+    filenames=test_generator.filenames
+    results=pd.DataFrame({"file":filenames,"pr":pred[:,0], "class":cl[:,0]})
+    results.to_csv("results.csv")
 
 # def test_batch(img_folder):
 #     model = build_model()
@@ -106,11 +144,11 @@ def train(train_generator, validation_generator):
 
 if __name__ == "__main__":
 
-    if sys.argv[1] == 'train':
-        train(train_generator, validation_generator)
+    if sys.argv[1] == 'train_resnet50':
+        train_resnet50(train_generator, validation_generator)
+    if sys.argv[1] == 'train_vgg16':
+        train_vgg16(train_generator, validation_generator)
     if sys.argv[1] == 'test':
-        test(sys.argv[2])
+        test_resnet() 
     if sys.argv[1] == 'test_batch':
         test_batch(sys.argv[2])
-    if sys.argv[1] == 'retrain':
-        retrain()

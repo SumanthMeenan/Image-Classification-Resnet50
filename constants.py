@@ -1,17 +1,20 @@
+# import keras
 from keras.callbacks import ModelCheckpoint, TensorBoard, ReduceLROnPlateau
 from keras.optimizers import SGD, RMSprop, Adadelta 
 
 IMG_WIDTH, IMG_HEIGHT = 256, 256
 NB_TRAIN_SAMPLES = 5168
 NB_VALIDATION_SAMPLES = 64
-EPOCHS = 60
+EPOCHS = 1
 BATCH_SIZE = 16
 NUM_CLASSES = 2
 
-TENSORBOARD_DIR = 'C:/Users/AG92031/OneDrive - Anthem/Desktop/WorkOS/Research Work/chest_xray_code/logs'
-CHECKPOINT_PATH = 'C:/Users/AG92031/OneDrive - Anthem/Desktop/WorkOS/Research Work/chest_xray_code/resnet_model.h5'
-WEIGHTS_PATH = 'C:/Users/AG92031/OneDrive - Anthem/Desktop/WorkOS/Research Work/chest_xray_code/weights.h5'
-DATA_PATH = 'C:/Users/AG92031/OneDrive - Anthem/Desktop/WorkOS/Research Work/chest_xray/' 
+TENSORBOARD_DIR = '/home/sumanthmeenan/Desktop/AI_personal_projects/chest_xray_code/logs'
+CHECKPOINT_PATH = '/home/sumanthmeenan/Desktop/AI_personal_projects/chest_xray_code/resnetweights.h5'
+WEIGHTS_PATH1 = '/home/sumanthmeenan/Desktop/AI_personal_projects/chest_xray_code/resnetweights.h5'
+WEIGHTS_PATH2 = '/home/sumanthmeenan/Desktop/AI_personal_projects/chest_xray_code/vggweights.h5'
+MODELPATH = '/home/sumanthmeenan/Desktop/AI_personal_projects/chest_xray_code/resnetmodel.hdf5'
+DATA_PATH = '/home/sumanthmeenan/Desktop/AI_personal_projects/chest_xray/' 
 TRAIN_DATA = DATA_PATH+ 'train/'
 TEST_DATA = DATA_PATH+ 'test/'
 VAL_DATA = DATA_PATH+ 'val/' 
